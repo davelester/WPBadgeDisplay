@@ -28,7 +28,7 @@ class WPBadgeDisplayWidget extends WP_Widget
 	?>
 	<p><label for="<?php echo $this->get_field_id('title'); ?>">Title: <input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo attribute_escape($title); ?>" /></label></p>
 	
-	<p><label for="openbadges_user_id">Open Badges ID: <input class="widefat" id="openbadges_user_id" name="openbadges_user_id" type="text" value="<?php echo get_option('openbadges_user_id'); ?>" /></label></p>
+	<p><label for="openbadges_user_id">Email Account: <input class="widefat" id="openbadges_email" name="openbadges_email" type="text" value="<?php echo get_option('openbadges_email'); ?>" /></label></p>
 	<?php
 	}
 
@@ -36,7 +36,28 @@ class WPBadgeDisplayWidget extends WP_Widget
 	{
 		$instance = $old_instance;
 		$instance['title'] = $new_instance['title'];
-		update_option('openbadges_user_id', $_POST['openbadges_user_id']);
+		update_option('openbadges_email', $_POST['openbadges_email']);
+
+		// build the http query, and stream POST when calling the file
+		$postdata = http_build_query(
+		    array(
+		        'email' => $_POST['openbadges_email']
+		    )
+		);
+
+		$opts = array('http' =>
+		    array(
+		        'method'  => 'POST',
+		        'header'  => 'Content-type: application/x-www-form-urlencoded',
+		        'content' => $postdata
+		    )
+		);
+
+		$context  = stream_context_create($opts);
+		$emailjson = file_get_contents('http://beta.openbadges.org/displayer/convert/email', false, $context);
+		$emaildata = json_decode($emailjson);
+		
+		update_option('openbadges_user_id', $emaildata->userId);
 		
 		return $instance;
 	}
@@ -72,7 +93,18 @@ class WPBadgeDisplayWidget extends WP_Widget
 				echo "<h2><a href='" . $badge->assertion->badge->issuer->origin . "'>". $badge->assertion->badge->name . "</a></h2>";
 				echo "<img src='" . $badge->assertion->badge->image . "'>";
 			}
+			
+			// If no badges have been added to a public group, print a message
+			if (!$badgesdata->badges) {
+				echo "No badges have been added to this group.";
+			}
 		}
+
+		// If no public groups exist, print a message
+		if (!$groupsdata->groups) {
+			echo "No public groups exist for this user.";
+		}
+		
 		echo "</div>";
 	}
  
