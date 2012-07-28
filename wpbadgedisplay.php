@@ -5,8 +5,8 @@
 /*
 Plugin Name: WPBadgeDisplay
 Plugin URI: https://github.com/davelester/WPBadgeDisplay
-Description: Adds a widget to your WordPress blog to display Open Badges.
-Version: 0.4
+Description: Adds a widget for displaying Open Badges on your blog. 
+Version: 0.8
 Author: Dave Lester
 Author URI: http://www.davelester.org
 */
