@@ -100,7 +100,7 @@ function wpbadgedisplay_return_embed($openbadgesuserid, $badge) {
 		
 		foreach ($badgesdata->badges as $badge) {
 			echo "<h2><a href='" . $badge->assertion->badge->issuer->origin . "'>". $badge->assertion->badge->name . "</a></h2>";
-			echo "<img src='" . $badge->assertion->badge->image . "'>";
+			echo "<img src='" . $badge->imageUrl . "'>";
 		}
 		
 		// If no badges have been added to a public group, print a message
