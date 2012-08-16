@@ -127,6 +127,11 @@ function wpbadgedisplay_openbadgestag( $atts ) {
 	if ($email && $username) {
 		return "An email address and username cannot both be included as attributes of a single shortcode.";	
 	}
+
+	// If a username for a WordPress install is given, retrieve its email address
+	if ($username) {
+		$email = get_the_author_meta('user_email', get_user_by('login', $username)->ID);
+	}
 	
 	if ($email) {
 		// First step is retrieving the Open Badges ID for an email address
@@ -148,13 +153,11 @@ function wpbadgedisplay_openbadgestag( $atts ) {
 		$emailjson = file_get_contents('http://beta.openbadges.org/displayer/convert/email', false, $context);
 		$emaildata = json_decode($emailjson);
 
-		// Display badges, based on Open badges id and optional params
-		return wpbadgedisplay_return_embed($emaildata->userId, $badge);
+		$openbadgesuserid = $emaildata->userId;
 	}
 	
-	if ($username) {
-		
-	}
+	// Display badges, based on Open badges id and optional params
+	return wpbadgedisplay_return_embed($openbadgesuserid, $badge);
 	
 	// @todo: github ticket #3, if email or username not specified and shortcode is called
 	// on an author page, automatically retrieve the author email from the plugin
