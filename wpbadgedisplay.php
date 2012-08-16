@@ -99,8 +99,8 @@ function wpbadgedisplay_return_embed($openbadgesuserid, $badge) {
 		$badgesdata = json_decode($badgesjson);
 		
 		foreach ($badgesdata->badges as $badge) {
-			echo "<h2><a href='" . $badge->assertion->badge->issuer->origin . "'>". $badge->assertion->badge->name . "</a></h2>";
-			echo "<img src='" . $badge->imageUrl . "'>";
+			echo "<h2><a href='" . $badge->assertion->badge->criteria . "'>". $badge->assertion->badge->name . "</h2>";
+			echo "<img src='" . $badge->imageUrl . "' border='0'></a>";
 		}
 		
 		// If no badges have been added to a public group, print a message
@@ -123,6 +123,9 @@ function wpbadgedisplay_openbadgestag( $atts ) {
 		'badge_name' => ''
 	), $atts ) );
 
+	// Create params array
+	$params = array();
+
 	// If both email and username specified, return an error message
 	if ($email && $username) {
 		return "An email address and username cannot both be included as attributes of a single shortcode.";	
@@ -133,8 +136,9 @@ function wpbadgedisplay_openbadgestag( $atts ) {
 		$email = get_the_author_meta('user_email', get_user_by('login', $username)->ID);
 	}
 	
+	/* 	With a user's email address, retrieve their Mozilla Persona ID
+		Ideally, this code only has to run once since a persona ID will not change */
 	if ($email) {
-		// First step is retrieving the Open Badges ID for an email address
 		$postdata = http_build_query(
 		    array(
 		        'email' => $email
@@ -155,9 +159,13 @@ function wpbadgedisplay_openbadgestag( $atts ) {
 
 		$openbadgesuserid = $emaildata->userId;
 	}
+
+	/*  Adds a hook for other plugins (including WPBadger) to add more shortcodes
+		that can optionally be added to the params array */
+	do_action('openbadges_shortcode_hook');
 	
 	// Display badges, based on Open badges id and optional params
-	return wpbadgedisplay_return_embed($openbadgesuserid, $badge);
+	return wpbadgedisplay_return_embed($openbadgesuserid, $params);
 	
 	// @todo: github ticket #3, if email or username not specified and shortcode is called
 	// on an author page, automatically retrieve the author email from the plugin
