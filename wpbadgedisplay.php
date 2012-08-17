@@ -38,27 +38,9 @@ class WPBadgeDisplayWidget extends WP_Widget
 		$instance['title'] = $new_instance['title'];
 		update_option('openbadges_email', $_POST['openbadges_email']);
 
-		// build the http query, and stream POST when calling the file
-		$postdata = http_build_query(
-		    array(
-		        'email' => $_POST['openbadges_email']
-		    )
-		);
+		$openbadgesuserid = wpbadgedisplay_convert_email_to_openbadges_id($_POST['openbadges_email']);
+		update_option('openbadges_user_id', $openbadgesuserid);
 
-		$opts = array('http' =>
-		    array(
-		        'method'  => 'POST',
-		        'header'  => 'Content-type: application/x-www-form-urlencoded',
-		        'content' => $postdata
-		    )
-		);
-
-		$context  = stream_context_create($opts);
-		$emailjson = file_get_contents('http://beta.openbadges.org/displayer/convert/email', false, $context);
-		$emaildata = json_decode($emailjson);
-		
-		update_option('openbadges_user_id', $emaildata->userId);
-		
 		return $instance;
 	}
 
@@ -70,19 +52,55 @@ class WPBadgeDisplayWidget extends WP_Widget
 		if (!empty($title))
 			echo $before_title . $title . $after_title;;
 
-		echo wpbadgedisplay_return_embed(get_option('openbadges_user_id'), null);
+		$badgedata = wpbadgedisplay_get_public_backpack_contents(get_option('openbadges_user_id'), null);
+		echo wpbadgedisplay_return_embed($badgedata);
 	}
  
 }
 add_action( 'widgets_init', create_function('', 'return register_widget("WPBadgeDisplayWidget");') );
 
-/* Embed function that returns the badges, and is used by both widgets and shortocdes */
-function wpbadgedisplay_return_embed($openbadgesuserid, $badge) {	
-	// Retrieve a list of groups, based upon a user id
-	$url = "http://beta.openbadges.org/displayer/". $openbadgesuserid ."/groups.json";
-	$groupsjson = file_get_contents($url, 0, null, null);
+// Using OpenBadges User ID, retrieve array of public groups and badges from backpack displayer api
+function wpbadgedisplay_get_public_backpack_contents($openbadgesuserid)
+{
+	$backpackdata = array();
+	
+	$groupsurl = "http://beta.openbadges.org/displayer/". $openbadgesuserid ."/groups.json";
+	$groupsjson = file_get_contents($groupsurl, 0, null, null);
 	$groupsdata = json_decode($groupsjson);
+	
+	foreach ($groupsdata->groups as $group) {
+		$badgesurl = "http://beta.openbadges.org/displayer/".$openbadgesuserid."/group/".$group->groupId.".json";
+		$badgesjson = file_get_contents($badgesurl, 0, null, null);
+		$badgesdata = json_decode($badgesjson);
 
+		$badgesingroup = array();
+
+		foreach ($badgesdata->badges as $badge) {
+			$badgedata = array(
+				'title' => $badge->assertion->badge->name,
+				'image' => $badge->imageUrl,
+				'criteriaurl' => $badge->assertion->badge->criteria,
+				'issuername' => $badge->assertion->badge->issuer->name,
+				'issuerurl' => $badge->assertion->badge->issuer->origin,
+			);
+			array_push($badgesingroup, $badgedata);
+		}
+		
+		$groupdata = array(
+			'groupname' => $group->name,
+			'groupID' => $group->groupId,
+			'numberofbadges' => $group->badges,
+			'badges' => $badgesingroup
+			);
+		array_push($backpackdata, $groupdata);
+	}
+
+	return $backpackdata;
+}
+
+/* Generate HTML returned to display badges. Used by both widgets and shortcodes */
+function wpbadgedisplay_return_embed($badgedata, $options=null) {
+	
 	// @todo: max-height and max-widget should be plugin configurations
 	echo "<style>#wpbadgedisplay_widget img {
 		max-height:80px;
@@ -91,32 +109,47 @@ function wpbadgedisplay_return_embed($openbadgesuserid, $badge) {
 
 	echo "<div id='wpbadgedisplay_widget'>";
 
-	foreach ($groupsdata->groups as $group) {
-		echo "<h1>" . $group->name . "</h1>";
+	foreach ($badgedata as $group) {
+		echo "<h1>" . $group['groupname'] . "</h1>";
 		
-		$badgesurl = "http://beta.openbadges.org/displayer/".$openbadgesuserid."/group/".$group->groupId.".json";
-		$badgesjson = file_get_contents($badgesurl, 0, null, null);
-		$badgesdata = json_decode($badgesjson);
-		
-		foreach ($badgesdata->badges as $badge) {
-			echo "<h2><a href='" . $badge->assertion->badge->criteria . "'>". $badge->assertion->badge->name . "</h2>";
-			echo "<img src='" . $badge->imageUrl . "' border='0'></a>";
+		foreach($group['badges'] as $badge) {
+			echo "<h2><a href='" . $badge['criteriaurl'] . "'>". $badge['title'] . "</h2>";
+			echo "<img src='" . $badge['image'] . "' border='0'></a>";
 		}
-		
-		// If no badges have been added to a public group, print a message
-		if (!$badgesdata->badges) {
+
+		if (!$group['badges']) {
 			echo "No badges have been added to this group.";
 		}
 	}
 
-	// If no public groups exist, print a message
-	if (!$groupsdata->groups) {
+	if (!$badgedata) {
 		echo "No public groups exist for this user.";
 	}
 	echo "</div>";
 }
 
-function wpbadgedisplay_openbadgestag( $atts ) {
+function wpbadgedisplay_convert_email_to_openbadges_id($email) {
+	$postdata = http_build_query(
+	    array(
+	        'email' => $email
+	    )
+	);
+
+	$opts = array('http' =>
+	    array(
+	        'method'  => 'POST',
+	        'header'  => 'Content-type: application/x-www-form-urlencoded',
+	        'content' => $postdata
+	    )
+	);
+
+	$context  = stream_context_create($opts);
+	$emailjson = file_get_contents('http://beta.openbadges.org/displayer/convert/email', false, $context);
+	$emaildata = json_decode($emailjson);
+	return $emaildata->userId;
+}
+
+function wpbadgedisplay_read_shortcodes( $atts ) {
 	extract( shortcode_atts( array(
 		'email' => '',
 		'username' => '',
@@ -137,38 +170,20 @@ function wpbadgedisplay_openbadgestag( $atts ) {
 	}
 	
 	/* 	With a user's email address, retrieve their Mozilla Persona ID
-		Ideally, this code only has to run once since a persona ID will not change */
+		Ideally, email->ID conversion will run only once since a persona ID will not change */
 	if ($email) {
-		$postdata = http_build_query(
-		    array(
-		        'email' => $email
-		    )
-		);
-
-		$opts = array('http' =>
-		    array(
-		        'method'  => 'POST',
-		        'header'  => 'Content-type: application/x-www-form-urlencoded',
-		        'content' => $postdata
-		    )
-		);
-
-		$context  = stream_context_create($opts);
-		$emailjson = file_get_contents('http://beta.openbadges.org/displayer/convert/email', false, $context);
-		$emaildata = json_decode($emailjson);
-
-		$openbadgesuserid = $emaildata->userId;
+		$openbadgesuserid = wpbadgedisplay_convert_email_to_openbadges_id($email);
 	}
 
-	/*  Adds a hook for other plugins (including WPBadger) to add more shortcodes
+	/*  Adds a hook for other plugins (like WPBadger) to add more shortcodes
 		that can optionally be added to the params array */
-	do_action('openbadges_shortcode_hook');
+	do_action('openbadges_shortcode');
 	
-	// Display badges, based on Open badges id and optional params
-	return wpbadgedisplay_return_embed($openbadgesuserid, $params);
+	$badgedata = wpbadgedisplay_get_public_backpack_contents($openbadgesuserid);
+	return wpbadgedisplay_return_embed($badgedata);
 	
 	// @todo: github ticket #3, if email or username not specified and shortcode is called
 	// on an author page, automatically retrieve the author email from the plugin
 }
-add_shortcode('openbadges', 'wpbadgedisplay_openbadgestag');
+add_shortcode('openbadges', 'wpbadgedisplay_read_shortcodes');
 ?>
