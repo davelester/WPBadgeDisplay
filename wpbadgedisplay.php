@@ -129,24 +129,19 @@ function wpbadgedisplay_return_embed($badgedata, $options=null) {
 }
 
 function wpbadgedisplay_convert_email_to_openbadges_id($email) {
-	$postdata = http_build_query(
-	    array(
-	        'email' => $email
-	    )
-	);
+	$emailjson = wp_remote_post( 'http://beta.openbadges.org/displayer/convert/email', array(
+		'body' => array(
+			'email' => $email
+		),
+	) );
 
-	$opts = array('http' =>
-	    array(
-	        'method'  => 'POST',
-	        'header'  => 'Content-type: application/x-www-form-urlencoded',
-	        'content' => $postdata
-	    )
-	);
+	// @todo The user id should probably be cached locally since it's persistent anyway
+	if ( is_wp_error( $emailjson ) || 200 != $emailjson['response']['code'] ) {
+		return '';
+	}
 
-	$context  = stream_context_create($opts);
-	$emailjson = file_get_contents('http://beta.openbadges.org/displayer/convert/email', false, $context);
-	$emaildata = json_decode($emailjson);
-	return $emaildata->userId;
+	$body = json_decode( $emailjson['body'] );
+	return $body->userId;
 }
 
 function wpbadgedisplay_read_shortcodes( $atts ) {
