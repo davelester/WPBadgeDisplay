@@ -168,7 +168,12 @@ function wpbadgedisplay_read_shortcodes( $atts ) {
 	if ($username) {
 		$email = get_the_author_meta('user_email', get_user_by('login', $username)->ID);
 	}
-	
+
+	// If we still have no email value, fall back on the author of the current post
+	if ( ! $email ) {
+		$email = get_the_author_meta( 'user_email' );
+	}
+
 	/* 	With a user's email address, retrieve their Mozilla Persona ID
 		Ideally, email->ID conversion will run only once since a persona ID will not change */
 	if ($email) {
