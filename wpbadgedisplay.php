@@ -153,7 +153,7 @@ function wpbadgedisplay_read_shortcodes( $atts ) {
 	extract( shortcode_atts( array(
 		'email' => '',
 		'username' => '',
-		'badge_name' => ''
+		'badgename' => ''
 	), $atts ) );
 
 	// Create params array
@@ -180,7 +180,7 @@ function wpbadgedisplay_read_shortcodes( $atts ) {
 	do_action('openbadges_shortcode');
 	
 	$badgedata = wpbadgedisplay_get_public_backpack_contents($openbadgesuserid);
-	return wpbadgedisplay_return_embed($badgedata);
+	return wpbadgedisplay_return_embed($badgedata, $options);
 	
 	// @todo: github ticket #3, if email or username not specified and shortcode is called
 	// on an author page, automatically retrieve the author email from the plugin
