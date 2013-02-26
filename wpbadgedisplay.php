@@ -109,25 +109,35 @@ function wpbadgedisplay_get_public_backpack_contents($openbadgesuserid)
 function wpbadgedisplay_return_embed($badgedata, $options=null) {
 
 	// @todo: max-height and max-widget should be plugin configurations
-	echo "<style>#wpbadgedisplay_widget img {
+	echo "<style>
+	#wpbadgedisplay_widget img {
 		max-height:80px;
 		max-width:80px;
-	}</style>";
+		display: inline !important;
+	}
+	#wpbadgedisplay_widget li {
+		list-style-type: none;
+		display: inline !important;
+	}
+	</style>";
 
 	echo "<div id='wpbadgedisplay_widget'>";
 
 	foreach ($badgedata as $group) {
 		echo "<h1>" . $group['groupname'] . "</h1>";
-
+		echo "<ol>";
 		foreach($group['badges'] as $badge) {
 			$url   = $badge['criteriaurl'];
 			$title = $badge['title'];
 			$image = $badge['image'];
+			echo "<li>";
 			if ($options['show_bname']) {
 				echo "<h2><a href='$url'>$title</a></h2>";
 			}
 			echo "<a href='$url'><img src='$image' alt='$title' title='$title' border='0'></a>";
+			echo "</li>";
 		}
+		echo "</ol>";
 
 		if (!$group['badges']) {
 			echo "No badges have been added to this group.";
