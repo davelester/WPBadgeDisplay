@@ -113,8 +113,11 @@ function wpbadgedisplay_return_embed($badgedata, $options=null) {
 		echo "<h1>" . $group['groupname'] . "</h1>";
 
 		foreach($group['badges'] as $badge) {
-			echo "<h2><a href='" . $badge['criteriaurl'] . "'>". $badge['title'] . "</h2>";
-			echo "<img src='" . $badge['image'] . "' border='0'></a>";
+			$url   = $badge['criteriaurl'];
+			$title = $badge['title'];
+			$image = $badge['image'];
+			echo "<h2><a href='$url'>$title</a></h2>";
+			echo "<a href='$url'><img src='$image' alt='$title' title='$title' border='0'></a>";
 		}
 
 		if (!$group['badges']) {
