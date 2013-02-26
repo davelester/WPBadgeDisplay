@@ -30,6 +30,14 @@ class WPBadgeDisplayWidget extends WP_Widget
 
 	<p><label for="openbadges_user_id">Email Account: <input class="widefat" id="openbadges_email" name="openbadges_email" type="text" value="<?php echo get_option('openbadges_email'); ?>" /></label></p>
 	
+	<p><label for="openbadges_display">Display: 
+	<select class="widefat" id="openbadges_display" name="openbadges_display">
+		<option value=''       <?php if (get_option('openbadges_display') == '') { echo "selected='selected'"; } ?>>Default</option>
+		<option value='block'  <?php if (get_option('openbadges_display') == 'block') { echo "selected='selected'"; } ?>>Block</option>
+		<option value='inline' <?php if (get_option('openbadges_display') == 'inline') { echo "selected='selected'"; } ?>>Inline</option>
+	</select>
+	</label></p>
+	
 	<p><label for="openbadges_show_bname">Show badges names: <input class="widefat" id="openbadges_show_bname" name="openbadges_show_bname" type="checkbox" <?php if (get_option('openbadges_show_bname')) echo 'checked="checked"'; ?> /></label></p>
 	<?php
 	}
@@ -43,6 +51,7 @@ class WPBadgeDisplayWidget extends WP_Widget
 		$openbadgesuserid = wpbadgedisplay_convert_email_to_openbadges_id($_POST['openbadges_email']);
 		update_option('openbadges_user_id', $openbadgesuserid);
 		
+		update_option('openbadges_display', $_POST['openbadges_display']);
 		update_option('openbadges_show_bname', $_POST['openbadges_show_bname']);
 
 		return $instance;
@@ -58,7 +67,8 @@ class WPBadgeDisplayWidget extends WP_Widget
 
 		$badgedata = wpbadgedisplay_get_public_backpack_contents(get_option('openbadges_user_id'), null);
 		$options   = array(
-			'show_bname' => get_option('openbadges_show_bname')
+			'show_bname' => get_option('openbadges_show_bname'),
+			'display'    => get_option('openbadges_display')
 		);
 		echo wpbadgedisplay_return_embed($badgedata, $options);
 	}
@@ -109,15 +119,20 @@ function wpbadgedisplay_get_public_backpack_contents($openbadgesuserid)
 function wpbadgedisplay_return_embed($badgedata, $options=null) {
 
 	// @todo: max-height and max-widget should be plugin configurations
+	$display = '';
+	if ($options['display']) {
+		$display = 'display: ' . $options['display'] . ' !important;';
+	}
+
 	echo "<style>
 	#wpbadgedisplay_widget img {
 		max-height:80px;
 		max-width:80px;
-		display: inline !important;
+		$display
 	}
 	#wpbadgedisplay_widget li {
 		list-style-type: none;
-		display: inline !important;
+		$display
 	}
 	</style>";
 
@@ -171,6 +186,7 @@ function wpbadgedisplay_read_shortcodes( $atts ) {
 		'email'      => '',
 		'username'   => '',
 		'badgename'  => '',
+		'display'    => '',
 		'show_badgename' => 1
 	), $atts ) );
 
@@ -204,7 +220,8 @@ function wpbadgedisplay_read_shortcodes( $atts ) {
 
 	$badgedata = wpbadgedisplay_get_public_backpack_contents($openbadgesuserid);
 	$options = array(
-		'show_bname' => $show_badgename
+		'show_bname' => $show_badgename,
+		'display'    => $display
 	);
 	return wpbadgedisplay_return_embed($badgedata, $options);
 
