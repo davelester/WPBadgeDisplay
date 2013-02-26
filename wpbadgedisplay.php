@@ -29,6 +29,8 @@ class WPBadgeDisplayWidget extends WP_Widget
 	<p><label for="<?php echo $this->get_field_id('title'); ?>">Title: <input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo attribute_escape($title); ?>" /></label></p>
 
 	<p><label for="openbadges_user_id">Email Account: <input class="widefat" id="openbadges_email" name="openbadges_email" type="text" value="<?php echo get_option('openbadges_email'); ?>" /></label></p>
+	
+	<p><label for="openbadges_show_bname">Show badges names: <input class="widefat" id="openbadges_show_bname" name="openbadges_show_bname" type="checkbox" <?php if (get_option('openbadges_show_bname')) echo 'checked="checked"'; ?> /></label></p>
 	<?php
 	}
 
@@ -40,6 +42,8 @@ class WPBadgeDisplayWidget extends WP_Widget
 
 		$openbadgesuserid = wpbadgedisplay_convert_email_to_openbadges_id($_POST['openbadges_email']);
 		update_option('openbadges_user_id', $openbadgesuserid);
+		
+		update_option('openbadges_show_bname', $_POST['openbadges_show_bname']);
 
 		return $instance;
 	}
@@ -53,7 +57,10 @@ class WPBadgeDisplayWidget extends WP_Widget
 			echo $before_title . $title . $after_title;;
 
 		$badgedata = wpbadgedisplay_get_public_backpack_contents(get_option('openbadges_user_id'), null);
-		echo wpbadgedisplay_return_embed($badgedata);
+		$options   = array(
+			'show_bname' => get_option('openbadges_show_bname')
+		);
+		echo wpbadgedisplay_return_embed($badgedata, $options);
 	}
 
 }
@@ -116,7 +123,9 @@ function wpbadgedisplay_return_embed($badgedata, $options=null) {
 			$url   = $badge['criteriaurl'];
 			$title = $badge['title'];
 			$image = $badge['image'];
-			echo "<h2><a href='$url'>$title</a></h2>";
+			if ($options['show_bname']) {
+				echo "<h2><a href='$url'>$title</a></h2>";
+			}
 			echo "<a href='$url'><img src='$image' alt='$title' title='$title' border='0'></a>";
 		}
 
@@ -149,9 +158,10 @@ function wpbadgedisplay_convert_email_to_openbadges_id($email) {
 
 function wpbadgedisplay_read_shortcodes( $atts ) {
 	extract( shortcode_atts( array(
-		'email' => '',
-		'username' => '',
-		'badgename' => ''
+		'email'      => '',
+		'username'   => '',
+		'badgename'  => '',
+		'show_badgename' => 1
 	), $atts ) );
 
 	// Create params array
@@ -183,7 +193,10 @@ function wpbadgedisplay_read_shortcodes( $atts ) {
 	do_action('openbadges_shortcode');
 
 	$badgedata = wpbadgedisplay_get_public_backpack_contents($openbadgesuserid);
-	return wpbadgedisplay_return_embed($badgedata);
+	$options = array(
+		'show_bname' => $show_badgename
+	);
+	return wpbadgedisplay_return_embed($badgedata, $options);
 
 	// @todo: github ticket #3, if email or username not specified and shortcode is called
 	// on an author page, automatically retrieve the author email from the plugin
