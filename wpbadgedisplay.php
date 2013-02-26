@@ -38,7 +38,8 @@ class WPBadgeDisplayWidget extends WP_Widget
 	</select>
 	</label></p>
 	
-	<p><label for="openbadges_show_bname">Show badges names: <input class="widefat" id="openbadges_show_bname" name="openbadges_show_bname" type="checkbox" <?php if (get_option('openbadges_show_bname')) echo 'checked="checked"'; ?> /></label></p>
+	<p><label for="openbadges_show_bname">Show badges name: <input class="widefat" id="openbadges_show_bname" name="openbadges_show_bname" type="checkbox" <?php if (get_option('openbadges_show_bname')) echo 'checked="checked"'; ?> /></label></p>
+	<p><label for="openbadges_show_bdesc">Show badges description: <input class="widefat" id="openbadges_show_bdesc" name="openbadges_show_bdesc" type="checkbox" <?php if (get_option('openbadges_show_bdesc')) echo 'checked="checked"'; ?> /></label></p>
 	<?php
 	}
 
@@ -53,6 +54,7 @@ class WPBadgeDisplayWidget extends WP_Widget
 		
 		update_option('openbadges_display', $_POST['openbadges_display']);
 		update_option('openbadges_show_bname', $_POST['openbadges_show_bname']);
+		update_option('openbadges_show_bdesc', $_POST['openbadges_show_bdesc']);
 
 		return $instance;
 	}
@@ -68,6 +70,7 @@ class WPBadgeDisplayWidget extends WP_Widget
 		$badgedata = wpbadgedisplay_get_public_backpack_contents(get_option('openbadges_user_id'), null);
 		$options   = array(
 			'show_bname' => get_option('openbadges_show_bname'),
+			'show_bdesc' => get_option('openbadges_show_bdesc'),
 			'display'    => get_option('openbadges_display')
 		);
 		echo wpbadgedisplay_return_embed($badgedata, $options);
@@ -95,6 +98,7 @@ function wpbadgedisplay_get_public_backpack_contents($openbadgesuserid)
 		foreach ($badgesdata->badges as $badge) {
 			$badgedata = array(
 				'title' => $badge->assertion->badge->name,
+				'description' => $badge->assertion->badge->description,
 				'image' => $badge->imageUrl,
 				'criteriaurl' => $badge->assertion->badge->criteria,
 				'issuername' => $badge->assertion->badge->issuer->name,
@@ -144,12 +148,16 @@ function wpbadgedisplay_return_embed($badgedata, $options=null) {
 		foreach($group['badges'] as $badge) {
 			$url   = $badge['criteriaurl'];
 			$title = $badge['title'];
+			$desc  = $badge['description'];
 			$image = $badge['image'];
 			echo "<li>";
 			if ($options['show_bname']) {
 				echo "<h2><a href='$url'>$title</a></h2>";
 			}
-			echo "<a href='$url'><img src='$image' alt='$title' title='$title' border='0'></a>";
+			if ($options['show_bdesc']) {
+				echo "<p>$desc</p>";
+			}
+			echo "<a href='$url'><img src='$image' alt='$title' title='$desc' border='0'></a>";
 			echo "</li>";
 		}
 		echo "</ol>";
@@ -187,6 +195,7 @@ function wpbadgedisplay_read_shortcodes( $atts ) {
 		'username'   => '',
 		'badgename'  => '',
 		'display'    => '',
+		'show_badgedesc' => 0,
 		'show_badgename' => 1
 	), $atts ) );
 
@@ -221,6 +230,7 @@ function wpbadgedisplay_read_shortcodes( $atts ) {
 	$badgedata = wpbadgedisplay_get_public_backpack_contents($openbadgesuserid);
 	$options = array(
 		'show_bname' => $show_badgename,
+		'show_bdesc' => $show_badgedesc,
 		'display'    => $display
 	);
 	return wpbadgedisplay_return_embed($badgedata, $options);
