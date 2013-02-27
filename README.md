@@ -16,7 +16,7 @@ Alternatively badges can be added to any page using the [openbadges] tag:
 
     [openbadges
        email          = 'user_email@example.com'
-       display        = 'inline|block'
+       display        = ''|'inline-block'
        show_badgename = 0|1
        show_badgedesc = 0|1
     ]
