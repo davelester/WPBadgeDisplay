@@ -32,9 +32,8 @@ class WPBadgeDisplayWidget extends WP_Widget
 	
 	<p><label for="openbadges_display">Display: 
 	<select class="widefat" id="openbadges_display" name="openbadges_display">
-		<option value=''       <?php if (get_option('openbadges_display') == '') { echo "selected='selected'"; } ?>>Default</option>
-		<option value='block'  <?php if (get_option('openbadges_display') == 'block') { echo "selected='selected'"; } ?>>Block</option>
-		<option value='inline' <?php if (get_option('openbadges_display') == 'inline') { echo "selected='selected'"; } ?>>Inline</option>
+		<option value=''             <?php if (get_option('openbadges_display') == '') { echo "selected='selected'"; } ?>>Badges on independent lines</option>
+		<option value='inline-block' <?php if (get_option('openbadges_display') == 'inline-block') { echo "selected='selected'"; } ?>>Several badges on the same line</option>
 	</select>
 	</label></p>
 	
