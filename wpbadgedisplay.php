@@ -39,6 +39,7 @@ class WPBadgeDisplayWidget extends WP_Widget
 	
 	<p><label for="openbadges_show_bname">Show badges name: <input class="widefat" id="openbadges_show_bname" name="openbadges_show_bname" type="checkbox" <?php if (get_option('openbadges_show_bname')) echo 'checked="checked"'; ?> /></label></p>
 	<p><label for="openbadges_show_bdesc">Show badges description: <input class="widefat" id="openbadges_show_bdesc" name="openbadges_show_bdesc" type="checkbox" <?php if (get_option('openbadges_show_bdesc')) echo 'checked="checked"'; ?> /></label></p>
+	<p><label for="openbadges_css_li">Additional badge css: <textarea class="widefat" id="openbadges_css_li" name="openbadges_css_li"><?php echo get_option('openbadges_css_li')?></textarea></label></p>
 	<?php
 	}
 
@@ -54,6 +55,7 @@ class WPBadgeDisplayWidget extends WP_Widget
 		update_option('openbadges_display', $_POST['openbadges_display']);
 		update_option('openbadges_show_bname', $_POST['openbadges_show_bname']);
 		update_option('openbadges_show_bdesc', $_POST['openbadges_show_bdesc']);
+		update_option('openbadges_css_li', $_POST['openbadges_css_li']);
 
 		return $instance;
 	}
@@ -70,7 +72,8 @@ class WPBadgeDisplayWidget extends WP_Widget
 		$options   = array(
 			'show_bname' => get_option('openbadges_show_bname'),
 			'show_bdesc' => get_option('openbadges_show_bdesc'),
-			'display'    => get_option('openbadges_display')
+			'display'    => get_option('openbadges_display'),
+			'css_li'     => get_option('openbadges_css_li')
 		);
 		echo wpbadgedisplay_return_embed($badgedata, $options);
 	}
@@ -127,6 +130,8 @@ function wpbadgedisplay_return_embed($badgedata, $options=null) {
 		$display = 'display: ' . $options['display'] . ' !important;';
 	}
 
+	$css_li = $options['css_li'];
+
 	echo "<style>
 	#wpbadgedisplay_widget img {
 		max-height:80px;
@@ -136,6 +141,7 @@ function wpbadgedisplay_return_embed($badgedata, $options=null) {
 	#wpbadgedisplay_widget li {
 		list-style-type: none;
 		$display
+		$css_li
 	}
 	</style>";
 
@@ -195,7 +201,8 @@ function wpbadgedisplay_read_shortcodes( $atts ) {
 		'badgename'  => '',
 		'display'    => '',
 		'show_badgedesc' => 0,
-		'show_badgename' => 1
+		'show_badgename' => 1,
+		'css_li'     => ''
 	), $atts ) );
 
 	// Create params array
@@ -230,7 +237,8 @@ function wpbadgedisplay_read_shortcodes( $atts ) {
 	$options = array(
 		'show_bname' => $show_badgename,
 		'show_bdesc' => $show_badgedesc,
-		'display'    => $display
+		'display'    => $display,
+		'css_li'     => $css_li
 	);
 	return wpbadgedisplay_return_embed($badgedata, $options);
 
