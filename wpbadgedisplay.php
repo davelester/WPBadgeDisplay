@@ -14,10 +14,15 @@ Author URI: http://www.davelester.org
 class WPBadgeDisplayWidget extends WP_Widget
 {
 	public function __construct() {
+		$widget_ops = array(
+			'classname' => 'wpbadgedisplay_widget',
+			'description' => __( 'Display an Open Badge Backpack', 'wpbadgedisplay-widget' )
+		);
+
 		parent::__construct(
 	 		'WPBadgeDisplayWidget',
 			'WPBadgeDisplay Widget',
-			array( 'description' => __( 'Display Open Badges', 'text_domain' ), )
+			$widget_ops
 		);
 	}
 
@@ -65,6 +70,7 @@ class WPBadgeDisplayWidget extends WP_Widget
 		extract($args);
 		$title = apply_filters( 'widget_title', $instance['title'] );
 
+		echo $before_widget;
 		if (!empty($title))
 			echo $before_title . $title . $after_title;;
 
@@ -75,7 +81,9 @@ class WPBadgeDisplayWidget extends WP_Widget
 			'display'    => get_option('openbadges_display'),
 			'css_li'     => get_option('openbadges_css_li')
 		);
+
 		echo wpbadgedisplay_return_embed($badgedata, $options);
+		echo $after_widget;
 	}
 
 }
@@ -133,37 +141,34 @@ function wpbadgedisplay_return_embed($badgedata, $options=null) {
 	$css_li = $options['css_li'];
 
 	echo "<style>
-	#wpbadgedisplay_widget img {
-		max-height:80px;
-		max-width:80px;
+	.wpbadgedisplay_widget img {
+		max-height:40px;
+		max-width:40px;
 		$display
 	}
-	#wpbadgedisplay_widget li {
+	.wpbadgedisplay_widget li {
 		list-style-type: none;
 		$display
 		$css_li
 	}
 	</style>";
 
-	echo "<div id='wpbadgedisplay_widget'>";
-
 	foreach ($badgedata as $group) {
-		echo "<h1>" . $group['groupname'] . "</h1>";
-		echo "<ol>";
+		echo "<h4 class='title4'>" . $group['groupname'] . "</h4>";
+		echo "<div id='wpbadgedisplay_" . $group['groupID'] . "'>";
+
 		foreach($group['badges'] as $badge) {
 			$url   = $badge['criteriaurl'];
 			$title = $badge['title'];
 			$desc  = $badge['description'];
 			$image = $badge['image'];
-			echo "<li>";
 			if ($options['show_bname']) {
-				echo "<h2><a href='$url'>$title</a></h2>";
+				echo "<h5 class='title5'><a href='$url'>$title</a></h5>";
 			}
 			if ($options['show_bdesc']) {
 				echo "<p>$desc</p>";
 			}
-			echo "<a href='$url'><img src='$image' alt='$title' title='$desc' border='0'></a>";
-			echo "</li>";
+			echo "<a href='$url'><img src='$image' alt='$title' title='$title: $desc' border='0'></a>";
 		}
 		echo "</ol>";
 
@@ -175,7 +180,6 @@ function wpbadgedisplay_return_embed($badgedata, $options=null) {
 	if (!$badgedata) {
 		echo "No public groups exist for this user.";
 	}
-	echo "</div>";
 }
 
 function wpbadgedisplay_convert_email_to_openbadges_id($email) {
