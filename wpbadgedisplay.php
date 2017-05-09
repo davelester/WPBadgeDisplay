@@ -1,14 +1,15 @@
 <?php
 /**
- * @package WPBadgeDisplay
- */
-/*
-Plugin Name: WPBadgeDisplay
-Plugin URI: https://github.com/davelester/WPBadgeDisplay
-Description: Adds a widget for displaying Open Badges on your blog.
-Version: 0.8
-Author: Dave Lester
-Author URI: http://www.davelester.org
+ *
+ * Plugin Name: WPBadgeDisplay
+ * Version: 0.8
+ * Description: Adds a widget for displaying Open Badges on your blog.
+ * Author: Dave Lester
+ * Author URI: http://www.davelester.org
+ * Plugin URI: https://github.com/davelester/WPBadgeDisplay
+ * Text Domain: wpbadgedisplay
+ * Domain Path: /languages
+ * @package wpbadgedisplay
 */
 
 class WPBadgeDisplayWidget extends WP_Widget {
