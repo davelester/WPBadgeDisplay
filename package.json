@@ -1,0 +1,29 @@
+{
+  "name": "wpbadgedisplay",
+  "version": "0.8.0",
+  "description": "Overview WPBadgeDisplay is a WordPress plugin for displaying [Open Badges](http://www.openbadges.org) on your blog. The plugin's theme widget allows users to easily configure the display of badges that are associated with a particular email address.",
+  "main": "Gruntfile.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LafColITS/WPBadgeDisplay.git"
+  },
+  "contributors": [
+    {
+      "name": "Dave Lester"
+    },
+    {
+      "name": "Charles Fulton"
+    }
+  ],
+  "license": "MPL-2.0",
+  "bugs": {
+    "url": "https://github.com/LafColITS/WPBadgeDisplay/issues"
+  },
+  "homepage": "https://github.com/LafColITS/WPBadgeDisplay#readme",
+  "devDependencies": {
+    "grunt": "~0.4.5",
+    "grunt-bump": "^0.7.3",
+    "grunt-wp-i18n": "~0.5.0",
+    "grunt-wp-readme-to-markdown": "~2.0.0"
+  }
+}
