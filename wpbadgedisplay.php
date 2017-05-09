@@ -26,22 +26,27 @@ class WPBadgeDisplayWidget extends WP_Widget {
 	function form( $instance ) {
 		$instance = wp_parse_args( (array) $instance, array(
 			'title' => '',
+			'openbadges_email' => '',
+			'openbadges_user_id' => '',
 		) );
 		$title = $instance['title'];
 	?>
-	<p><label for="<?php echo $this->get_field_id( 'title' ); ?>">Title: <input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>" /></label></p>
+	<p><label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php _e( 'Title:', 'wpbadgedisplay' ); ?> <input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>" /></label></p>
 
-	<p><label for="openbadges_user_id">Email Account: <input class="widefat" id="openbadges_email" name="openbadges_email" type="text" value="<?php echo get_option( 'openbadges_email' ); ?>" /></label></p>
+	<p><label for="openbadges_user_id"><?php _e( 'Email Account:', 'wpbadgedisplay' ); ?> <input class="widefat" id="openbadges_email" name="<?php echo $this->get_field_name( 'openbadges_email' ); ?>" type="text" value="<?php echo esc_attr( $instance['openbadges_email'] ); ?>" /></label></p>
 	<?php
 	}
 
 	function update( $new_instance, $old_instance ) {
 		$instance = $old_instance;
-		$instance['title'] = $new_instance['title'];
-		update_option( 'openbadges_email', $_POST['openbadges_email'] );
-
-		$openbadgesuserid = wpbadgedisplay_convert_email_to_openbadges_id( $_POST['openbadges_email'] );
-		update_option( 'openbadges_user_id', $openbadgesuserid );
+		$args = wp_parse_args( (array) $new_instance, array(
+			'title' => '',
+			'openbadges_email' => '',
+			'openbadges_user_id' => '',
+		) );
+		$instance['title'] = sanitize_text_field( $args['title'] );
+		$instance['openbadges_email'] = $args['openbadges_email'];
+		$instance['openbadges_user_id'] = wpbadgedisplay_convert_email_to_openbadges_id( $instance['openbadges_email'] );
 
 		return $instance;
 	}
@@ -54,12 +59,41 @@ class WPBadgeDisplayWidget extends WP_Widget {
 			echo $before_title . $title . $after_title;
 		}
 
-		$badgedata = wpbadgedisplay_get_public_backpack_contents( get_option( 'openbadges_user_id' ), null );
+		$badgedata = wpbadgedisplay_get_public_backpack_contents( $instance['openbadges_user_id'], null );
 		echo wpbadgedisplay_return_embed( $badgedata );
 	}
 
 }
 add_action( 'widgets_init', create_function( '', 'return register_widget("WPBadgeDisplayWidget");' ) );
+
+if ( ! defined( 'WPBADGEDISPLAY_VERSION' ) ) {
+	define( 'WPBADGEDISPLAY_VERSION', '1.0.0' );
+}
+
+// Verify what major version we're at.
+function wpbadgedisplay_check_version() {
+	if ( WPBADGEDISPLAY_VERSION !== get_option( 'wpbadgedisplay_version' ) ) {
+		wpbadgedisplay_activation();
+	}
+}
+add_action( 'plugins_loaded', 'wpbadgedisplay_check_version' );
+
+// Run on activation.
+function wpbadgedisplay_activation() {
+	update_option( 'wpbadgedisplay_version', WPBADGEDISPLAY_VERSION );
+
+	$openbadges_email = get_option( 'openbadges_email' );
+	if ( $openbadges_email ) {
+		wpbadgedisplay_migrate_settings( $openbadges_email );
+	}
+}
+register_activation_hook( __FILE__, 'wpbadgedisplay_activation' );
+
+// Run on deacativation.
+function wpbadgedisplay_deactivation() {
+	delete_option( 'wpbadgedisplay_version' );
+}
+register_deactivation_hook( __FILE__, 'wpbadgedisplay_deactivation' );
 
 // Using OpenBadges User ID, retrieve array of public groups and badges from backpack displayer api
 function wpbadgedisplay_get_public_backpack_contents( $openbadgesuserid ) {
@@ -199,4 +233,23 @@ function wpbadgedisplay_scripts() {
 	wp_enqueue_style( 'wpbadgedisplay-style', plugins_url( 'style.css', __FILE__ ) );
 }
 add_action( 'wp_enqueue_scripts', 'wpbadgedisplay_scripts' );
+
+// Beginning with 1.0.0 options are stored per-widget.
+function wpbadgedisplay_migrate_settings( $openbadges_email ) {
+	$wpbadgedisplaywidget = get_option( 'widget_wpbadgedisplaywidget' );
+	if ( $wpbadgedisplaywidget ) {
+		// We force this in case there were prior API failures.
+		$openbadges_user_id = wpbadgedisplay_convert_email_to_openbadges_id( $openbadges_email );
+		foreach ( $wpbadgedisplaywidget as $id => $widget ) {
+			if ( is_int( $id ) ) {
+			        $wpbadgedisplaywidget[ $id ]['openbadges_email'] = $openbadges_email;
+			        $wpbadgedisplaywidget[ $id ]['openbadges_user_id'] = $openbadges_user_id;
+			}
+		}
+		update_option( 'widget_wpbadgedisplaywidget', $wpbadgedisplaywidget );
+	}
+	delete_option( 'openbadges_email' );
+	delete_option( 'openbadges_user_id' );
+}
+
 ?>
