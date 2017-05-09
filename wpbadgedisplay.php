@@ -17,7 +17,7 @@ class WPBadgeDisplayWidget extends WP_Widget {
 	 		'WPBadgeDisplayWidget',
 			'WPBadgeDisplay Widget',
 			array(
-				'description' => __( 'Display Open Badges', 'text_domain' ),
+				'description' => __( 'Display Open Badges', 'wpbadgedisplay' ),
 			)
 		);
 	}
@@ -125,12 +125,12 @@ function wpbadgedisplay_return_embed( $badgedata, $options = null ) {
 		echo '</ul>';
 
 		if ( ! $group['badges'] ) {
-			echo 'No badges have been added to this group.';
+			echo __( 'No badges have been added to this group', 'wpbadgedisplay' );
 		}
 	}
 
 	if ( ! $badgedata ) {
-		echo 'No public groups exist for this user.';
+		echo __( 'No public groups exist for this user', 'wpbadgedisplay' );
 	}
 	echo '</div>';
 }
@@ -163,7 +163,7 @@ function wpbadgedisplay_read_shortcodes( $atts ) {
 
 	// If both email and username specified, return an error message
 	if ( $email && $username ) {
-		return 'An email address and username cannot both be included as attributes of a single shortcode.';
+		return __( 'An email address and username cannot both be included as attributes of a single shortcode', 'wpbadgedisplay' );
 	}
 
 	// If a username for a WordPress install is given, retrieve its email address
