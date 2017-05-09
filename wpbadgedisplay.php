@@ -108,22 +108,21 @@ function wpbadgedisplay_get_public_backpack_contents( $openbadgesuserid ) {
 
 /* Generate HTML returned to display badges. Used by both widgets and shortcodes */
 function wpbadgedisplay_return_embed( $badgedata, $options = null ) {
-
-	// @todo: max-height and max-widget should be plugin configurations
-	echo '<style>#wpbadgedisplay_widget img {
-		max-height:80px;
-		max-width:80px;
-	}</style>';
-
 	echo "<div id='wpbadgedisplay_widget'>";
 
 	foreach ( $badgedata as $group ) {
-		echo "<h1>{$group['groupname']}</h1>";
+		echo '<h1>' . $group['groupname'] . '</h1>';
+		echo '<ul class="badge-list">';
 
 		foreach ( $group['badges'] as $badge ) {
-			echo "<h2><a href='" . $badge['criteriaurl'] . "'>" . $badge['title'] . '</h2>';
-			echo "<img src='" . $badge['image'] . "' border='0'></a>";
+			echo '<li>';
+			echo "<a href='" . $badge['criteriaurl'] . "'>";
+			echo "<img src='" . $badge['image'] . "' />";
+			echo '<h2>' . $badge['title'] . '</h2>';
+			echo '</a>';
+			echo '</li>';
 		}
+		echo '</ul>';
 
 		if ( ! $group['badges'] ) {
 			echo 'No badges have been added to this group.';
@@ -194,4 +193,9 @@ function wpbadgedisplay_read_shortcodes( $atts ) {
 	// on an author page, automatically retrieve the author email from the plugin
 }
 add_shortcode( 'openbadges', 'wpbadgedisplay_read_shortcodes' );
+
+function wpbadgedisplay_scripts() {
+	wp_enqueue_style( 'wpbadgedisplay-style', plugins_url( 'style.css', __FILE__ ) );
+}
+add_action( 'wp_enqueue_scripts', 'wpbadgedisplay_scripts' );
 ?>
