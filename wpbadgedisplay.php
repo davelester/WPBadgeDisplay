@@ -64,15 +64,21 @@ add_action( 'widgets_init', create_function( '', 'return register_widget("WPBadg
 function wpbadgedisplay_get_public_backpack_contents( $openbadgesuserid ) {
 	$backpackdata = array();
 
-	$groupsurl = "http://beta.openbadges.org/displayer/{$openbadgesuserid}/groups.json";
-	$groupsjson = file_get_contents( $groupsurl, 0, null, null );
-	$groupsdata = json_decode( $groupsjson );
+	$groupsurl = "https://backpack.openbadges.org/displayer/{$openbadgesuserid}/groups.json";
+	$response = wp_remote_get( $groupsurl );
+	if ( ! is_array( $response ) ) {
+		return '';
+	}
+	$groupsdata = json_decode( $response['body'] );
 
 	if ( ! empty( $groupsdata->groups ) ) {
 		foreach ( $groupsdata->groups as $group ) {
-			$badgesurl = "http://beta.openbadges.org/displayer/{$openbadgesuserid}/group/{$group->groupId}.json";
-			$badgesjson = file_get_contents( $badgesurl, 0, null, null );
-			$badgesdata = json_decode( $badgesjson );
+			$badgesurl = "https://backpack.openbadges.org/displayer/{$openbadgesuserid}/group/{$group->groupId}.json";
+			$response = wp_remote_get( $badgesurl );
+			if ( ! is_array( $response ) ) {
+				continue;
+			}
+			$badgesdata = json_decode( $response['body'] );
 
 			$badgesingroup = array();
 
@@ -131,7 +137,7 @@ function wpbadgedisplay_return_embed( $badgedata, $options = null ) {
 }
 
 function wpbadgedisplay_convert_email_to_openbadges_id( $email ) {
-	$emailjson = wp_remote_post( 'http://beta.openbadges.org/displayer/convert/email', array(
+	$emailjson = wp_remote_post( 'https://backpack.openbadges.org/displayer/convert/email', array(
 		'body' => array(
 			'email' => $email,
 		),
