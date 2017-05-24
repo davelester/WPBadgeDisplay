@@ -2,8 +2,8 @@
 Contributors: davelester,mackensen
 Tags: Awards,badges,openbadges,widget,wpbadgedisplay
 Requires at least: 3.4.2
-Tested up to: 4.7.4
-Stable tag: trunk
+Tested up to: 4.7.5
+Stable tag: 0.9.0
 License: MPL-2.0
 License URI: https://www.mozilla.org/en-US/MPL/2.0/
 
