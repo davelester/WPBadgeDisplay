@@ -242,8 +242,8 @@ function wpbadgedisplay_migrate_settings( $openbadges_email ) {
 		$openbadges_user_id = wpbadgedisplay_convert_email_to_openbadges_id( $openbadges_email );
 		foreach ( $wpbadgedisplaywidget as $id => $widget ) {
 			if ( is_int( $id ) ) {
-			        $wpbadgedisplaywidget[ $id ]['openbadges_email'] = $openbadges_email;
-			        $wpbadgedisplaywidget[ $id ]['openbadges_user_id'] = $openbadges_user_id;
+				$wpbadgedisplaywidget[ $id ]['openbadges_email'] = $openbadges_email;
+				$wpbadgedisplaywidget[ $id ]['openbadges_user_id'] = $openbadges_user_id;
 			}
 		}
 		update_option( 'widget_wpbadgedisplaywidget', $wpbadgedisplaywidget );
@@ -251,5 +251,146 @@ function wpbadgedisplay_migrate_settings( $openbadges_email ) {
 	delete_option( 'openbadges_email' );
 	delete_option( 'openbadges_user_id' );
 }
+
+function wpbadgedisplay_eraser( $email_address, $page = 1 ) {
+	$limit = 100; // Limit us to avoid timing out
+	$page = (int) $page;
+	$offset = $limit * ( $page - 1 );
+
+	$items_left = false;
+	$items_removed = false;
+
+	$widgets = get_option( 'widget_wpbadgedisplaywidget' );
+	$widgets_updated = array();
+
+	if ( count( $widgets ) > $limit ) {
+		$widgets = array_slice( $widgets, $offset, $limit, true );
+		$items_left = true;
+	}
+
+	foreach ( $widgets as $key => $instance ) {
+		$new_instance = null;
+		if ( is_array( $instance ) && array_key_exists( 'title', $instance ) ) {
+			if ( $instance['openbadges_email'] === $email_address ) {
+				$new_instance = $instance;
+				$new_instance['openbadges_email'] = '';
+				$new_instance['openbadges_user_id'] = '';
+				$items_removed = true;
+			}
+		}
+		$widgets_updated[$key] = $new_instance ? $new_instance : $instance;
+	}
+
+	update_option( 'widget_wpbadgedisplaywidget', $widgets_updated );
+
+  // Tell core if we have more comments to work on still
+	return array(
+		'items_removed'=> $items_removed,
+		'items_retained' => false,
+		'messages' => array(),
+		'done' => (bool) !$items_left,
+	);
+}
+
+function wpbadgedisplay_exporter( $email_address, $page = 1 ) {
+	$limit = 100; // Limit us to avoid timing out
+	$page = (int) $page;
+	$offset = $limit * ( $page - 1 );
+
+	$items_left = false;
+
+	$widgets = get_option( 'widget_wpbadgedisplaywidget' );
+
+	if ( count( $widgets ) > $limit ) {
+		$widgets = array_slice( $widgets, $offset, $limit, true );
+		$items_left = true;
+	}
+
+	$widget_ids = array();
+	foreach ( $widgets as $key => $instance ) {
+		if ( is_array( $instance ) && array_key_exists( 'title', $instance ) ) {
+			if ( $instance['openbadges_email'] === $email_address ) {
+				$widget_ids[] = $key;
+			}
+		}
+	}
+
+	$items = array();
+
+	$group_id = 'widgets';
+	$group_label = __( 'Widgets' );
+
+	$data = array(
+		array(
+			'name'	=> __( 'WPBadgeDisplay Widgets Using Your Email/ID' ),
+			'value'	=> implode(', ', $widget_ids),
+		)
+	);
+	$items[] = array(
+		'group_id' 		=> $group_id,
+		'group_label' => $group_label,
+		'item_id' 		=> 'wpbadgedisplay-widget-ids',
+		'data' 				=> $data,
+	);
+
+	$data = array(
+		array(
+			'name'	=> __( 'Your Open Badges Backpack User ID According to WPBadgeDisplay' ),
+			'value'	=> wpbadgedisplay_convert_email_to_openbadges_id( $email_address ),
+		)
+	);
+	$items[] = array(
+		'group_id' 		=> $group_id,
+		'group_label' => $group_label,
+		'item_id' 		=> 'wpbadgedisplay-widget-ids',
+		'data' 				=> $data,
+	);
+
+	$data = array(
+		array(
+			'name'	=> __( 'Badge Data Imported by WPBadgeDisplay' ),
+			'value'	=> print_r( wpbadgedisplay_get_public_backpack_contents( wpbadgedisplay_convert_email_to_openbadges_id ( $email_address ) ), true ),
+		)
+	);
+	$items[] = array(
+		'group_id'		=> $group_id,
+		'group_label'	=> $group_label,
+		'item_id'			=> 'wpbadgedisplay-badge-data',
+		'data'				=> $data,
+	);
+
+  // Tell core if we have more comments to work on still
+	return array(
+		'data' => $items,
+		'done' => (bool) !$items_left,
+	);
+}
+
+function register_wpbadgedisplay_eraser() {
+	$erasers['wpbadgedisplay'] = array(
+		'eraser_friendly_name'	=> __( 'WPBadgeDisplay Plugin' ),
+		'callback'							=> 'wpbadgedisplay_eraser',
+	);
+	return $erasers;
+}
+
+function register_wpbadgedisplay_exporter( $exporters ) {
+  $exporters['wpbadgedisplay'] = array(
+		'eraser_friendly_name'	=> __( 'WPBadgeDisplay Plugin' ),
+		'callback'							=> 'wpbadgedisplay_exporter',
+  );
+  return $exporters;
+}
+
+add_filter(
+  'wp_privacy_personal_data_exporters',
+  'register_my_plugin_exporter',
+  10
+);
+add_filter(
+  'wp_privacy_personal_data_exporters',
+  'register_wpbadgedisplay_exporter',
+  10
+);
 
 ?>
